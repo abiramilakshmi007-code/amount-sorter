@@ -1,37 +1,49 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Contribution Sorter</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Contribution Tracker</title>
 
 <style>
+
 body{
 font-family: Arial;
 background:#f4f4f4;
-text-align:center;
+margin:0;
+padding:10px;
 }
 
 .container{
 background:white;
 padding:20px;
-width:420px;
+max-width:500px;
 margin:auto;
-margin-top:50px;
 border-radius:10px;
 box-shadow:0 0 10px rgba(0,0,0,0.2);
 }
 
+h2{
+text-align:center;
+}
+
 input{
-padding:8px;
-margin:5px;
+width:100%;
+padding:10px;
+margin:6px 0;
+font-size:16px;
 }
 
 button{
-padding:8px 15px;
+width:100%;
+padding:12px;
+margin-top:8px;
+font-size:16px;
 background:#007bff;
 color:white;
 border:none;
-cursor:pointer;
-margin:5px;
+border-radius:5px;
 }
 
 table{
@@ -41,24 +53,30 @@ border-collapse:collapse;
 }
 
 th,td{
-padding:8px;
+padding:10px;
+text-align:center;
 border-bottom:1px solid #ddd;
 }
+
+#total{
+text-align:center;
+margin-top:10px;
+}
+
 </style>
+
 </head>
 
 <body>
 
 <div class="container">
 
-<h2>Amount Leaderboard</h2>
+<h2>Contribution Leaderboard</h2>
 
 <input type="text" id="name" placeholder="Enter Name">
 <input type="number" id="amount" placeholder="Enter Amount">
 
-<br>
-
-<button onclick="addData()">Add</button>
+<button onclick="addData()">Add Entry</button>
 <button onclick="clearData()">Clear All</button>
 
 <h3 id="total"></h3>
@@ -125,9 +143,9 @@ let total=0;
 
 for(let i=0;i<data.length;i++){
 
-total += data[i].amount;
+total+=data[i].amount;
 
-table.innerHTML +=
+table.innerHTML+=
 "<tr><td>"+(i+1)+"</td><td>"+data[i].name+"</td><td>"+data[i].amount+"</td></tr>";
 
 }
