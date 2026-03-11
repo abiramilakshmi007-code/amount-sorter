@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Amount Sorter</title>
+<title>Contribution Sorter</title>
 
 <style>
 body{
@@ -13,7 +13,7 @@ text-align:center;
 .container{
 background:white;
 padding:20px;
-width:400px;
+width:420px;
 margin:auto;
 margin-top:50px;
 border-radius:10px;
@@ -31,6 +31,7 @@ background:#007bff;
 color:white;
 border:none;
 cursor:pointer;
+margin:5px;
 }
 
 table{
@@ -43,7 +44,6 @@ th,td{
 padding:8px;
 border-bottom:1px solid #ddd;
 }
-
 </style>
 </head>
 
@@ -51,17 +51,21 @@ border-bottom:1px solid #ddd;
 
 <div class="container">
 
-<h2>Amount Tracker</h2>
+<h2>Amount Leaderboard</h2>
 
 <input type="text" id="name" placeholder="Enter Name">
 <input type="number" id="amount" placeholder="Enter Amount">
 
-<br><br>
+<br>
 
 <button onclick="addData()">Add</button>
+<button onclick="clearData()">Clear All</button>
+
+<h3 id="total"></h3>
 
 <table id="table">
 <tr>
+<th>Rank</th>
 <th>Name</th>
 <th>Amount</th>
 </tr>
@@ -71,7 +75,11 @@ border-bottom:1px solid #ddd;
 
 <script>
 
-let data=[];
+let data = JSON.parse(localStorage.getItem("contributions")) || [];
+
+function saveData(){
+localStorage.setItem("contributions", JSON.stringify(data));
+}
 
 function addData(){
 
@@ -85,6 +93,16 @@ return;
 
 data.push({name:name,amount:amount});
 
+sortData();
+saveData();
+display();
+
+document.getElementById("name").value="";
+document.getElementById("amount").value="";
+}
+
+function sortData(){
+
 data.sort(function(a,b){
 
 if(b.amount===a.amount){
@@ -95,24 +113,41 @@ return b.amount-a.amount;
 
 });
 
-display();
-
 }
 
 function display(){
 
 let table=document.getElementById("table");
 
-table.innerHTML="<tr><th>Name</th><th>Amount</th></tr>";
+table.innerHTML="<tr><th>Rank</th><th>Name</th><th>Amount</th></tr>";
+
+let total=0;
 
 for(let i=0;i<data.length;i++){
 
-table.innerHTML+=
-"<tr><td>"+data[i].name+"</td><td>"+data[i].amount+"</td></tr>";
+total += data[i].amount;
+
+table.innerHTML +=
+"<tr><td>"+(i+1)+"</td><td>"+data[i].name+"</td><td>"+data[i].amount+"</td></tr>";
 
 }
 
+document.getElementById("total").innerText="Total Collected: ₹"+total;
+
 }
+
+function clearData(){
+
+if(confirm("Delete all data?")){
+data=[];
+saveData();
+display();
+}
+
+}
+
+sortData();
+display();
 
 </script>
 
