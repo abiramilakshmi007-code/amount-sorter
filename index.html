@@ -3,65 +3,112 @@
 <head>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Temple Festival Contribution Register</title>
+<title>Temple Contribution Register</title>
 
 <style>
 
 body{
 font-family:Arial;
-background:#f2f2f2;
+background:#eef2f7;
 margin:0;
-padding:15px;
+padding:20px;
 }
 
 .container{
 background:white;
 padding:20px;
-max-width:1000px;
+max-width:900px;
 margin:auto;
-border-radius:8px;
-box-shadow:0 0 10px rgba(0,0,0,0.2);
+border-radius:10px;
+box-shadow:0 0 10px rgba(0,0,0,0.15);
 }
 
 h2{
 text-align:center;
 }
 
+.form{
+display:flex;
+gap:10px;
+flex-wrap:wrap;
+justify-content:center;
+}
+
 input{
-padding:8px;
-margin:5px;
+padding:10px;
+border:1px solid #ccc;
+border-radius:5px;
 }
 
 button{
-padding:8px 12px;
-margin:5px;
+padding:10px;
+background:#2563eb;
+color:white;
+border:none;
+border-radius:5px;
 cursor:pointer;
 }
 
 table{
 width:100%;
-border-collapse:collapse;
 margin-top:20px;
+border-collapse:collapse;
 }
 
-th,td{
+th{
+background:#2563eb;
+color:white;
 padding:10px;
+}
+
+td{
+padding:8px;
 border-bottom:1px solid #ddd;
 text-align:center;
 }
 
 .highlight{
-background:#ffe6e6;
+background:#ffe0e0 !important;
+}
+
+.stats{
+text-align:center;
+margin-top:10px;
+font-weight:bold;
+}
+
+.downloads{
+text-align:center;
+margin-top:20px;
 }
 
 @media(max-width:600px){
-
-input{
-width:100%;
+.form{flex-direction:column;}
+button{width:100%;}
 }
 
-button{
-width:100%;
+/* PRINT */
+@media print {
+
+.form,.downloads,input,button{
+display:none;
+}
+
+table{
+column-count:3;
+column-gap:30px;
+}
+
+tr{
+display:block;
+break-inside:avoid;
+}
+
+th{display:none;}
+
+td{
+display:inline-block;
+width:45%;
 }
 
 }
@@ -76,44 +123,45 @@ width:100%;
 
 <h2>Temple Festival Contribution Register</h2>
 
-<input type="text" id="name" placeholder="Name / பெயர்">
-<input type="number" id="amount" placeholder="Amount / தொகை">
+<div class="form">
+<input id="name" placeholder="Name / பெயர்">
+<input id="amount" type="number" placeholder="Amount / தொகை">
+<button onclick="addData()">Add</button>
+</div>
 
-<br>
+<input id="search" placeholder="Search..." onkeyup="display()">
 
-<button onclick="addData()">Add Entry</button>
-<button onclick="sortHigh()">Highest → Lowest</button>
-<button onclick="sortLow()">Lowest → Highest</button>
-
-<br>
-
-<button onclick="downloadCSV()">Download CSV (Excel)</button>
-<button onclick="downloadTXT()">Download TXT (Printer)</button>
-<button onclick="downloadJSON()">Download JSON (Backup)</button>
-
-<br>
-
-<button onclick="clearData()">Clear All</button>
+<div class="stats" id="stats"></div>
 
 <table id="table">
-
 <tr>
 <th>SNo</th>
 <th>Name</th>
 <th>Amount</th>
 <th>Edit</th>
 </tr>
-
 </table>
+
+<div class="downloads">
+<button onclick="downloadTXT()">TXT</button>
+<button onclick="downloadCSV()">CSV</button>
+<button onclick="downloadJSON()">JSON</button>
+<button onclick="printSheet()">Print</button>
+<button onclick="clearData()">Clear</button>
+</div>
 
 </div>
 
 <script>
 
-let data = JSON.parse(localStorage.getItem("templeData")) || [];
+let data=JSON.parse(localStorage.getItem("temple"))||[];
 
 function save(){
-localStorage.setItem("templeData",JSON.stringify(data));
+localStorage.setItem("temple",JSON.stringify(data));
+}
+
+function cap(name){
+return name.charAt(0).toUpperCase()+name.slice(1).toLowerCase();
 }
 
 function addData(){
@@ -121,12 +169,12 @@ function addData(){
 let name=document.getElementById("name").value.trim();
 let amount=parseInt(document.getElementById("amount").value);
 
-if(name=="" || !amount){
-alert("Enter name and amount");
-return;
-}
+if(!name||!amount){alert("Enter data");return;}
 
-data.push({name:name,amount:amount});
+name=cap(name);
+
+data.push({name,amount});
+data.sort((a,b)=>b.amount-a.amount);
 
 save();
 display();
@@ -135,62 +183,78 @@ document.getElementById("name").value="";
 document.getElementById("amount").value="";
 }
 
-function sortHigh(){
-data.sort((a,b)=>b.amount-a.amount);
-display();
-}
-
-function sortLow(){
-data.sort((a,b)=>a.amount-b.amount);
-display();
-}
-
 function display(){
 
-let table=document.getElementById("table");
+let search=document.getElementById("search").value.toLowerCase();
 
+let table=document.getElementById("table");
 table.innerHTML="<tr><th>SNo</th><th>Name</th><th>Amount</th><th>Edit</th></tr>";
+
+let total=0,count=0,max=0;
 
 for(let i=0;i<data.length;i++){
 
-let duplicate=data.filter(d=>d.name===data[i].name).length>1;
+if(!data[i].name.toLowerCase().includes(search)) continue;
+
+total+=data[i].amount;
+count++;
+if(data[i].amount>max) max=data[i].amount;
+
+let dup=data.filter(d=>d.name===data[i].name).length>1;
 
 table.innerHTML+=
-"<tr class='"+(duplicate?"highlight":"")+"'>"+
-"<td>"+(i+1)+"</td>"+
+"<tr class='"+(dup?"highlight":"")+"'>"+
+"<td>"+count+"</td>"+
 "<td>"+data[i].name+"</td>"+
 "<td>"+data[i].amount+"</td>"+
 "<td><button onclick='editRow("+i+")'>Edit</button></td>"+
 "</tr>";
-
 }
+
+document.getElementById("stats").innerText=
+"Total: ₹"+total+" | Donors: "+count+" | Highest: ₹"+max;
 
 }
 
 function editRow(i){
 
-let newName=prompt("Edit Name",data[i].name);
-let newAmount=prompt("Edit Amount",data[i].amount);
+let n=prompt("Name",data[i].name);
+let a=prompt("Amount",data[i].amount);
 
-if(newName && newAmount){
-
-data[i].name=newName;
-data[i].amount=parseInt(newAmount);
-
+if(n&&a){
+data[i].name=cap(n);
+data[i].amount=parseInt(a);
+data.sort((a,b)=>b.amount-a.amount);
 save();
 display();
-
 }
 
 }
 
 function clearData(){
-
-if(confirm("Delete all records?")){
+if(confirm("Delete all?")){
 data=[];
 save();
 display();
 }
+}
+
+function pad(t,l){return t.toString().padEnd(l," ");}
+
+function downloadTXT(){
+
+let text="SNo  Name                 Amount\n";
+text+="---------------------------------\n";
+
+for(let i=0;i<data.length;i++){
+text+=pad(i+1,4)+pad(data[i].name,20)+data[i].amount+"\n";
+}
+
+let blob=new Blob([text],{type:'text/plain'});
+let a=document.createElement("a");
+a.href=URL.createObjectURL(blob);
+a.download="records.txt";
+a.click();
 
 }
 
@@ -202,51 +266,29 @@ for(let i=0;i<data.length;i++){
 csv+=(i+1)+","+data[i].name+","+data[i].amount+"\n";
 }
 
-let BOM="\uFEFF";
-
-let blob=new Blob([BOM+csv],{type:'text/csv;charset=utf-8;'});
-
-let url=URL.createObjectURL(blob);
-
+let blob=new Blob(["\uFEFF"+csv],{type:'text/csv'});
 let a=document.createElement("a");
-a.href=url;
-a.download="temple_records.csv";
-a.click();
-
-}
-
-function downloadTXT(){
-
-let text="SNo   Name   Amount\n";
-
-for(let i=0;i<data.length;i++){
-text+=(i+1)+"   "+data[i].name+"   "+data[i].amount+"\n";
-}
-
-let blob=new Blob([text],{type:'text/plain'});
-let url=URL.createObjectURL(blob);
-
-let a=document.createElement("a");
-a.href=url;
-a.download="temple_records.txt";
+a.href=URL.createObjectURL(blob);
+a.download="records.csv";
 a.click();
 
 }
 
 function downloadJSON(){
 
-let jsonData=JSON.stringify(data,null,2);
-
-let blob=new Blob([jsonData],{type:'application/json'});
-let url=URL.createObjectURL(blob);
-
+let blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
 let a=document.createElement("a");
-a.href=url;
-a.download="temple_records.json";
+a.href=URL.createObjectURL(blob);
+a.download="records.json";
 a.click();
 
 }
 
+function printSheet(){
+window.print();
+}
+
+data.sort((a,b)=>b.amount-a.amount);
 display();
 
 </script>
